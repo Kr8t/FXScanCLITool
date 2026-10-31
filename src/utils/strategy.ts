@@ -54,10 +54,19 @@ function pipValue(symbol: string): number {
   return symbol.includes('JPY') ? 0.01 : 0.0001;
 }
 
+/**
+ * Inside Day: curr.close is STRICTLY INSIDE prev day's range.
+ * prev.low < curr.close < prev.high
+ */
 export function detectInsideDay(prev: Candle, curr: Candle): boolean {
   return prev.low < curr.close && curr.close < prev.high;
 }
 
+/**
+ * CIB (Closed In Breakout): curr.close is STRICTLY OUTSIDE prev day's range.
+ * Bullish: curr.close > prev.high + buffer
+ * Bearish: curr.close < prev.low - buffer
+ */
 export function detectCib(
   prev: Candle,
   curr: Candle,
