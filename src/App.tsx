@@ -1,21 +1,19 @@
 import { useState } from 'react';
 import Dashboard from './components/Dashboard';
 import CodeBrowser from './components/CodeBrowser';
-import Features from './components/Features';
 import Architecture from './components/Architecture';
 import DownloadGuide from './components/DownloadGuide';
 
-type Tab = 'download' | 'dashboard' | 'code' | 'architecture' | 'features';
+type Tab = 'dashboard' | 'download' | 'code' | 'architecture';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<Tab>('download');
+  const [activeTab, setActiveTab] = useState<Tab>('dashboard');
 
   const tabs: { id: Tab; label: string; icon: string }[] = [
+    { id: 'dashboard', label: 'Live Scanner', icon: '📡' },
     { id: 'download', label: 'Download & Run', icon: '⬇️' },
-    { id: 'dashboard', label: 'Live Output', icon: '📺' },
     { id: 'code', label: 'Source Code', icon: '💻' },
     { id: 'architecture', label: 'Architecture', icon: '🏗️' },
-    { id: 'features', label: 'Features', icon: '✨' },
   ];
 
   return (
@@ -30,15 +28,12 @@ export default function App() {
               </div>
               <div>
                 <h1 className="text-lg font-bold text-white tracking-tight">FX SCAN</h1>
-                <p className="text-xs text-gray-500 -mt-0.5">Major FX Pair Signal Scanner</p>
+                <p className="text-xs text-gray-500 -mt-0.5">18 Major FX Pairs • Real-time Confluence Scanner</p>
               </div>
             </div>
-
-            <div className="flex items-center gap-2">
-              <span className="hidden sm:inline text-xs text-gray-500 font-mono bg-gray-900 px-2 py-1 rounded border border-gray-800">
-                Python 3.10+ • yfinance • rich • SQLite
-              </span>
-            </div>
+            <span className="hidden sm:inline text-xs text-gray-500 font-mono bg-gray-900 px-2 py-1 rounded border border-gray-800">
+              Python 3.10+ • yfinance • rich • SQLite
+            </span>
           </div>
         </div>
       </header>
@@ -67,21 +62,20 @@ export default function App() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Page Title */}
         <div className="mb-6">
-          {activeTab === 'download' && (
+          {activeTab === 'dashboard' && (
             <div>
-              <h2 className="text-2xl font-bold text-white">Download & Run on Your Computer</h2>
+              <h2 className="text-2xl font-bold text-white">Live FX Scanner</h2>
               <p className="text-sm text-gray-400 mt-1">
-                Complete Python source code ready to run locally — all files available for copy/download below
+                Real data from ECB via frankfurter.app • Inside Day & CIB signals across 18 major pairs
               </p>
             </div>
           )}
-          {activeTab === 'dashboard' && (
+          {activeTab === 'download' && (
             <div>
-              <h2 className="text-2xl font-bold text-white">Simulated Scanner Output</h2>
+              <h2 className="text-2xl font-bold text-white">Download & Run Locally</h2>
               <p className="text-sm text-gray-400 mt-1">
-                Preview of what <code className="text-cyan-400 bg-gray-900 px-1.5 py-0.5 rounded text-xs">fx-scan</code> renders in the terminal
+                Full Python source with yfinance for true OHLC data
               </p>
             </div>
           )}
@@ -89,34 +83,24 @@ export default function App() {
             <div>
               <h2 className="text-2xl font-bold text-white">Source Code</h2>
               <p className="text-sm text-gray-400 mt-1">
-                Complete implementation across 5 core modules + tests + CI config
+                Complete Python implementation — copy any file to your project
               </p>
             </div>
           )}
           {activeTab === 'architecture' && (
             <div>
-              <h2 className="text-2xl font-bold text-white">Architecture & Design</h2>
+              <h2 className="text-2xl font-bold text-white">Architecture & Strategy Rules</h2>
               <p className="text-sm text-gray-400 mt-1">
-                File structure, data flow, and strategy detection rules
-              </p>
-            </div>
-          )}
-          {activeTab === 'features' && (
-            <div>
-              <h2 className="text-2xl font-bold text-white">Key Features</h2>
-              <p className="text-sm text-gray-400 mt-1">
-                What makes FX SCAN a robust CLI tool for FX analysis
+                How the scanner works and what the signals mean for your trading
               </p>
             </div>
           )}
         </div>
 
-        {/* Tab Content */}
-        {activeTab === 'download' && <DownloadGuide />}
         {activeTab === 'dashboard' && <Dashboard />}
+        {activeTab === 'download' && <DownloadGuide />}
         {activeTab === 'code' && <CodeBrowser />}
         {activeTab === 'architecture' && <Architecture />}
-        {activeTab === 'features' && <Features />}
       </main>
 
       {/* Footer */}
