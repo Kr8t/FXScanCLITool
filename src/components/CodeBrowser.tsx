@@ -110,13 +110,21 @@ def clear() -> None:
   {
     name: 'data.py',
     path: 'fx_scan/data.py',
-    description: 'yfinance fetcher with cache-first strategy',
-    content: `"""FX SCAN — Data fetching layer."""
+    description: 'yfinance fetcher with incomplete candle filtering',
+    content: `"""FX SCAN — Data fetching layer.
+
+IMPORTANT: Daily FX candles close at 5pm ET (22:00 UTC). If the
+current time is before that, today's bar is incomplete and must
+be excluded from analysis.
+"""
 from __future__ import annotations
+from datetime import datetime, timezone, time
 import pandas as pd
 import yfinance as yf
 from .config import FX_PAIRS, YF_PERIOD, YF_INTERVAL
 from .cache import load, store
+
+FX_DAILY_CLOSE_UTC: time = time(22, 0)  # 5pm ET
 
 def _normalize_tz(df: pd.DataFrame) -> pd.DataFrame:
     if df.empty: return df
@@ -126,10 +134,24 @@ def _normalize_tz(df: pd.DataFrame) -> pd.DataFrame:
     df.index = idx
     return df
 
-def fetch_pair(symbol: str, force: bool = False) -> list[dict] | None:
+def _is_today_complete(now: datetime | None = None) -> bool:
+    """Check if today's daily candle has completed (after 22:00 UTC)."""
+    if now is None: now = datetime.now(timezone.utc)
+    return now.time() >= FX_DAILY_CLOSE_UTC
+
+def _filter_completed_candles(rows: list[dict], now: datetime | None = None) -> list[dict]:
+    """Remove today's incomplete candle if market hasn't closed yet."""
+    if now is None: now = datetime.now(timezone.utc)
+    today_str = now.strftime("%Y-%m-%d")
+    if _is_today_complete(now):
+        return rows  # Keep everything
+    return [r for r in rows if r["date"] != today_str]  # Remove today
+
+def fetch_pair(symbol: str, force: bool = False, now: datetime | None = None) -> list[dict] | None:
     if not force:
-        cached = load(symbol)
-        if cached is not None: return cached
+        cached = load(symbol, now=now)
+        if cached is not None:
+            return _filter_completed_candles(cached, now=now)
     try:
         ticker = yf.Ticker(symbol)
         df = ticker.history(period=YF_PERIOD, interval=YF_INTERVAL)
@@ -139,16 +161,18 @@ def fetch_pair(symbol: str, force: bool = False) -> list[dict] | None:
         df.columns = ["open","high","low","close","volume"]
         rows = [{"date":ts.strftime("%Y-%m-%d"),"open":float(r["open"]),"high":float(r["high"]),
                  "low":float(r["low"]),"close":float(r["close"]),"volume":float(r["volume"])} for ts,r in df.iterrows()]
+        rows = _filter_completed_candles(rows, now=now)  # Filter incomplete
+        if not rows: return None
         store(symbol, rows)
         return rows
     except Exception as exc:
         print(f"  ⚠ Error fetching {symbol}: {exc}")
         return None
 
-def fetch_all(force: bool = False) -> dict[str, list[dict]]:
+def fetch_all(force: bool = False, now: datetime | None = None) -> dict[str, list[dict]]:
     results: dict[str, list[dict]] = {}
     for symbol in FX_PAIRS:
-        data = fetch_pair(symbol, force=force)
+        data = fetch_pair(symbol, force=force, now=now)
         if data is not None: results[symbol] = data
     return results`
   },
@@ -325,28 +349,72 @@ addopts = "-v --tb=short"`
   {
     name: 'run.bat',
     path: 'run.bat',
-    description: 'Windows batch launcher',
+    description: 'Windows batch launcher with cache clearing',
     content: `@echo off
+REM ═══════════════════════════════════════════════════════════════
+REM  FX SCAN — Windows Batch Launcher
+REM  Requires: Python 3.10+ with fx-scan installed
+REM ═══════════════════════════════════════════════════════════════
+
 title FX SCAN
+
 echo.
-echo  ╔═══════════════════════════════════════╗
-echo  ║       FX SCAN — FX Pair Scanner      ║
-echo  ╚═══════════════════════════════════════╝
+echo  ╔═══════════════════════════════════════════════════╗
+echo  ║       FX SCAN — Major FX Pair Signal Scanner     ║
+echo  ║                                                   ║
+echo  ║  Inside Day: Close INSIDE previous day's range    ║
+echo  ║  CIB: Close OUTSIDE previous day's range          ║
+echo  ╚═══════════════════════════════════════════════════╝
 echo.
+
+REM Check Python is available
 python --version >nul 2>&1
 if errorlevel 1 (
-    echo [ERROR] Python not found. Install Python 3.10+
-    pause & exit /b 1
+    echo [ERROR] Python not found. Please install Python 3.10+
+    echo         https://www.python.org/downloads/
+    pause
+    exit /b 1
 )
+
+REM Check if required packages are installed
+python -c "import yfinance" >nul 2>&1
+if errorlevel 1 (
+    echo [INFO] Installing required packages...
+    pip install yfinance rich pandas
+    if errorlevel 1 (
+        echo [ERROR] Installation failed.
+        pause
+        exit /b 1
+    )
+)
+
+REM Check if fx-scan is installed
 python -c "import fx_scan" >nul 2>&1
 if errorlevel 1 (
-    echo [INFO] Installing fx-scan...
+    echo [INFO] fx-scan not installed. Installing...
     pip install -e .
+    if errorlevel 1 (
+        echo [ERROR] Installation failed.
+        pause
+        exit /b 1
+    )
 )
-echo [INFO] Starting FX scan...
-python -m fx_scan.cli %*
+
+REM Clear cache to ensure fresh data
+echo [INFO] Clearing old cache...
+python -m fx_scan.cli --clear-cache >nul 2>&1
+
+REM Run the scanner with force flag to bypass cache
+echo [INFO] Fetching fresh market data from Yahoo Finance...
+echo [INFO] Note: Only COMPLETED daily candles are analyzed
+echo [INFO]       (Today's candle is excluded until 5pm ET)
 echo.
-pause`
+python -m fx_scan.cli --force %*
+
+echo.
+echo ═══════════════════════════════════════════════════════════
+echo [DONE] Press any key to exit...
+pause >nul`
   },
   {
     name: 'test_strategy.py',

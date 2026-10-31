@@ -109,6 +109,11 @@ def main(argv: list[str] | None = None) -> None:
         default=DEFAULT_PIP_BUFFER,
         help=f"Pip buffer for CIB detection (default: {DEFAULT_PIP_BUFFER}).",
     )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Show all raw candle data for verification.",
+    )
     args = parser.parse_args(argv)
 
     if args.clear_cache:
@@ -133,23 +138,37 @@ def main(argv: list[str] | None = None) -> None:
 
     console.print(f"  ✓ Loaded data for {len(data)} pairs")
 
-    # Analyze
-    signals = analyze_all(data, pip_buffer=args.pip_buffer)
-
-    inside_days = [s for s in signals if s.signal_type == "inside_day"]
-    cibs = [s for s in signals if s.signal_type == "cib"]
-
     # Debug: Show what dates are being analyzed
-    console.print(f"\n  [dim]Analyzing latest completed candles:[/dim]")
-    for symbol in list(data.keys())[:3]:  # Show first 3 as examples
+    console.print(f"\n  [dim]Latest completed candles (prev → curr):[/dim]")
+    for symbol in list(data.keys())[:5]:  # Show first 5 as examples
         candles = data[symbol]
         if len(candles) >= 2:
             prev = candles[-2]
             curr = candles[-1]
             name = PAIR_NAMES.get(symbol, symbol)
             console.print(
-                f"    [dim]{name}: {prev['date']} → {curr['date']}[/dim]"
+                f"    [dim]{name}: {prev['date']} → {curr['date']} "
+                f"(close: {curr['close']:.5f}, prev range: {prev['low']:.5f}-{prev['high']:.5f})[/dim]"
             )
+
+    # Debug mode: Show all raw data
+    if args.debug:
+        console.print(f"\n  [bold yellow]DEBUG MODE — All raw candle data:[/bold yellow]")
+        for symbol, candles in data.items():
+            name = PAIR_NAMES.get(symbol, symbol)
+            console.print(f"\n    [cyan]{name}[/cyan] ({len(candles)} candles):")
+            for i, c in enumerate(candles):
+                marker = " ← PREV" if i == len(candles) - 2 else " ← CURR" if i == len(candles) - 1 else ""
+                console.print(
+                    f"      {c['date']}: O={c['open']:.5f} H={c['high']:.5f} "
+                    f"L={c['low']:.5f} C={c['close']:.5f}{marker}"
+                )
+
+    # Analyze
+    signals = analyze_all(data, pip_buffer=args.pip_buffer)
+
+    inside_days = [s for s in signals if s.signal_type == "inside_day"]
+    cibs = [s for s in signals if s.signal_type == "cib"]
 
     # Render tables
     console.print()
