@@ -110,31 +110,31 @@ export default function Architecture() {
           <div className="space-y-3">
             <h4 className="text-purple-400 font-semibold flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-purple-400"></span>
-              Inside Day (ID)
+              Inside Day (ID) — Close INSIDE prev range
             </h4>
             <ul className="text-sm text-gray-400 space-y-2">
               <li className="flex items-start gap-2">
                 <span className="text-purple-400 mt-0.5">•</span>
-                <span>curr.high <strong className="text-white">&lt;</strong> prev.high (strictly below)</span>
+                <span>prev.low <strong className="text-white">&lt;</strong> close <strong className="text-white">&lt;</strong> prev.high</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-purple-400 mt-0.5">•</span>
-                <span>curr.low <strong className="text-white">&gt;</strong> prev.low (strictly above)</span>
+                <span>The <strong className="text-white">close</strong> must be strictly within previous day's range</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-purple-400 mt-0.5">•</span>
-                <span>Touching boundaries = NOT inside day</span>
+                <span>Suggests consolidation — price accepting value within prior range</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-purple-400 mt-0.5">•</span>
-                <span>Suppressed if CIB detected on same bar</span>
+                <span>Suppressed if CIB detected on same bar (mutually exclusive)</span>
               </li>
             </ul>
           </div>
           <div className="space-y-3">
             <h4 className="text-orange-400 font-semibold flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-orange-400"></span>
-              Closed In Breakout (CIB)
+              Closed In Breakout (CIB) — Close OUTSIDE prev range
             </h4>
             <ul className="text-sm text-gray-400 space-y-2">
               <li className="flex items-start gap-2">
@@ -147,11 +147,11 @@ export default function Architecture() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-orange-400 mt-0.5">•</span>
-                <span>Wick-only breaks are excluded (close must cross)</span>
+                <span>Suggests breakout — price rejecting prior range boundaries</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-orange-400 mt-0.5">•</span>
-                <span>Buffer in pips (default: 2.0, JPY-aware)</span>
+                <span>Buffer in pips (default: 2.0, JPY-aware) to filter noise</span>
               </li>
             </ul>
           </div>

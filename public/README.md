@@ -42,18 +42,18 @@ fx-scan --pip-buffer 3.0
 ## Strategies
 
 ### Inside Day (ID)
-A completed candle strictly within the previous day's range:
-- `curr.high < prev.high` AND `curr.low > prev.low`
-- Touching boundaries = NOT an inside day
+The candle CLOSES INSIDE the previous day's range:
+- `prev.low < close < prev.high`
+- Suggests consolidation — price accepting value within prior range
 
 ### Closed In Breakout (CIB)
-A completed candle's close beyond the previous day's High/Low:
+The candle CLOSES OUTSIDE the previous day's range:
 - Bullish: `close > prev.high + buffer`
 - Bearish: `close < prev.low - buffer`
-- Wick-only breaks are excluded
-- Default buffer: 2 pips (JPY-aware)
+- Suggests breakout — price rejecting prior range boundaries
+- Default buffer: 2 pips (JPY-aware) to filter noise
 
-**Note:** If CIB is detected, Inside Day is suppressed for that pair.
+**Note:** These are mutually exclusive. If CIB is detected, Inside Day is suppressed for that pair.
 
 ## Development
 
