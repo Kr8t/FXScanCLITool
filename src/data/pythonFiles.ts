@@ -329,21 +329,23 @@ def fetch_all(force: bool = False) -> dict[str, list[dict]]:
     description: 'Pure strategy functions — Inside Day & CIB detection',
     content: `"""FX SCAN — Strategy detection (pure functions).
 
-Two strategies are implemented:
+Two strategies are implemented for confluence with day trading ideas:
 
 1. **Inside Day (ID)**
-   The latest *completed* candle's High < prev High AND
-   latest Low > prev Low (strictly within previous day's range).
+   The latest completed candle CLOSES INSIDE the previous day's range.
+   (prev.low < curr.close < prev.high)
+   → Suggests consolidation, price accepting value within prior range.
 
 2. **Closed In Breakout (CIB)**
-   The latest *completed* candle's Close is strictly beyond
-   the previous day's High (bullish CIB) or Low (bearish CIB),
-   with a configurable pip buffer. Wicks-only breaks are excluded.
+   The latest completed candle CLOSES OUTSIDE the previous day's range.
+   - Bullish CIB: close > prev.high + buffer
+   - Bearish CIB: close < prev.low + buffer
+   → Suggests breakout, price rejecting prior range boundaries.
 
 Important rules:
 - Current partial bars are excluded (we only look at completed candles).
 - If a CIB signal exists on the latest bar, any Inside Day signal
-  for the same pair is suppressed.
+  for the same pair is suppressed (mutually exclusive outcomes).
 - All functions are pure (no side effects, no I/O).
 """
 
@@ -391,12 +393,12 @@ def detect_inside_day(
     prev: Candle,
     curr: Candle,
 ) -> bool:
-    """Return True if *curr* is an inside day relative to *prev*.
+    """Return True if *curr* closes inside previous day's range.
 
-    Inside day: curr.high < prev.high AND curr.low > prev.low
-    (strictly within, not touching boundaries).
+    Inside day: prev.low < curr.close < prev.high
+    (the close is strictly within the previous day's range).
     """
-    return curr.high < prev.high and curr.low > prev.low
+    return prev.low < curr.close < prev.high
 
 
 def detect_cib(
@@ -405,13 +407,13 @@ def detect_cib(
     symbol: str,
     pip_buffer: float = DEFAULT_PIP_BUFFER,
 ) -> Literal["bullish", "bearish"] | None:
-    """Detect Closed-In Breakout.
+    """Detect Closed In Breakout (CIB).
 
-    Bullish CIB: curr.close > prev.high + buffer
-    Bearish CIB: curr.close < prev.low - buffer
+    CIB occurs when the close is OUTSIDE the previous day's range:
+    - Bullish CIB: curr.close > prev.high + buffer
+    - Bearish CIB: curr.close < prev.low - buffer
 
-    Excludes wick-only breaks: the *close* must be beyond the level,
-    not just the high/low wick.
+    The pip buffer adds tolerance to avoid false signals from noise.
 
     Returns the direction or None.
     """
@@ -792,18 +794,18 @@ fx-scan --pip-buffer 3.0
 ## Strategies
 
 ### Inside Day (ID)
-A completed candle strictly within the previous day's range:
-- \`curr.high < prev.high\` AND \`curr.low > prev.low\`
-- Touching boundaries = NOT an inside day
+The candle CLOSES INSIDE the previous day's range:
+- \`prev.low < close < prev.high\`
+- Suggests consolidation — price accepting value within prior range
 
 ### Closed In Breakout (CIB)
-A completed candle's close beyond the previous day's High/Low:
+The candle CLOSES OUTSIDE the previous day's range:
 - Bullish: \`close > prev.high + buffer\`
 - Bearish: \`close < prev.low - buffer\`
-- Wick-only breaks are excluded
-- Default buffer: 2 pips (JPY-aware)
+- Suggests breakout — price rejecting prior range boundaries
+- Default buffer: 2 pips (JPY-aware) to filter noise
 
-**Note:** If CIB is detected, Inside Day is suppressed for that pair.
+**Note:** These are mutually exclusive. If CIB is detected, Inside Day is suppressed for that pair.
 
 ## Development
 
