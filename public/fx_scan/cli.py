@@ -53,11 +53,10 @@ def _build_table(
         title_style="bold magenta",
     )
     table.add_column("Pair", justify="left", min_width=10)
-    table.add_column("O", justify="right")
-    table.add_column("H", justify="right")
-    table.add_column("L", justify="right")
-    table.add_column("C", justify="right")
+    table.add_column("Date", justify="center")
+    table.add_column("Close", justify="right")
     table.add_column("Dir", justify="center", width=4)
+    table.add_column("Prev Date", justify="center")
     table.add_column("Prev H", justify="right")
     table.add_column("Prev L", justify="right")
     table.add_column("Buffer", justify="right")
@@ -65,7 +64,7 @@ def _build_table(
     if not signals:
         table.add_row(
             Text("No signals detected", style="dim italic"),
-            "", "", "", "", "", "", "", "",
+            "", "", "", "", "", "", "",
         )
         return table
 
@@ -77,11 +76,10 @@ def _build_table(
         p = sig.prev_candle
         table.add_row(
             Text(name, style=style),
-            Text(f"{c.open:.5f}", style=style),
-            Text(f"{c.high:.5f}", style=style),
-            Text(f"{c.low:.5f}", style=style),
+            Text(c.date, style=style),
             Text(f"{c.close:.5f}", style=style),
             Text(arrow, style=style),
+            Text(p.date, style="dim"),
             Text(f"{p.high:.5f}", style="dim"),
             Text(f"{p.low:.5f}", style="dim"),
             Text(f"{sig.pip_buffer:.1f}", style="yellow"),
@@ -141,11 +139,23 @@ def main(argv: list[str] | None = None) -> None:
     inside_days = [s for s in signals if s.signal_type == "inside_day"]
     cibs = [s for s in signals if s.signal_type == "cib"]
 
+    # Debug: Show what dates are being analyzed
+    console.print(f"\n  [dim]Analyzing latest completed candles:[/dim]")
+    for symbol in list(data.keys())[:3]:  # Show first 3 as examples
+        candles = data[symbol]
+        if len(candles) >= 2:
+            prev = candles[-2]
+            curr = candles[-1]
+            name = PAIR_NAMES.get(symbol, symbol)
+            console.print(
+                f"    [dim]{name}: {prev['date']} → {curr['date']}[/dim]"
+            )
+
     # Render tables
     console.print()
-    console.print(_build_table("📊 INSIDE DAY", inside_days))
+    console.print(_build_table("📊 INSIDE DAY (close inside prev range)", inside_days))
     console.print()
-    console.print(_build_table("🚀 CLOSED IN BREAKOUT (CIB)", cibs))
+    console.print(_build_table("🚀 CLOSED IN BREAKOUT (close outside prev range)", cibs))
     console.print()
 
     # Summary

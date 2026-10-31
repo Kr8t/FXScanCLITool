@@ -33,10 +33,14 @@ if errorlevel 1 (
     )
 )
 
-REM Run the scanner
-echo [INFO] Starting FX scan...
+REM Clear cache to ensure fresh data
+echo [INFO] Clearing cache for fresh data...
+python -m fx_scan.cli --clear-cache >nul 2>&1
+
+REM Run the scanner with force flag to bypass cache
+echo [INFO] Starting FX scan (fetching fresh data)...
 echo.
-python -m fx_scan.cli %*
+python -m fx_scan.cli --force %*
 
 echo.
 echo [DONE] Press any key to exit...
