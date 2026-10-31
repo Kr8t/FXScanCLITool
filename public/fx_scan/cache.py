@@ -16,6 +16,7 @@ from .config import (
     DATA_DIR,
     CACHE_FRESH_SECONDS_MARKET_OPEN,
     CACHE_FRESH_SECONDS_MARKET_CLOSED,
+    NY_TZ,
 )
 
 # ── Schema ──────────────────────────────────────────────────────────
@@ -43,17 +44,24 @@ def _init_db() -> sqlite3.Connection:
 
 
 def _is_market_open(now: datetime | None = None) -> bool:
-    """Return True if FX market is currently open (Sun 17:00 – Fri 17:00 ET).
+    """Return True if FX market is currently open (Sun 5:00 PM – Fri 5:00 PM NY time).
 
-    Simplified: checks day-of-week in UTC (Sun=6, Sat=5).
+    Uses New York timezone to automatically handle DST transitions.
+    Market is closed Saturday all day, and Sunday before 5:00 PM.
     """
     if now is None:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(NY_TZ)
+    elif now.tzinfo is None:
+        now = now.replace(tzinfo=timezone.utc).astimezone(NY_TZ)
+    else:
+        now = now.astimezone(NY_TZ)
+
     weekday = now.weekday()  # Monday=0 … Sunday=6
-    # Market closed Sat (5) and most of Sun (before 21:00 UTC ≈ 17:00 ET)
+    # Market closed all day Saturday (5)
     if weekday == 5:
         return False
-    if weekday == 6 and now.hour < 21:
+    # Market closed Sunday before 5:00 PM
+    if weekday == 6 and now.hour < 17:
         return False
     return True
 
@@ -72,7 +80,12 @@ def is_cache_fresh(fetched_at: str, now: datetime | None = None) -> bool:
         True if the cache entry has not expired.
     """
     if now is None:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(NY_TZ)
+    elif now.tzinfo is None:
+        now = now.replace(tzinfo=timezone.utc).astimezone(NY_TZ)
+    else:
+        now = now.astimezone(NY_TZ)
+
     fetched = datetime.fromisoformat(fetched_at)
     if fetched.tzinfo is None:
         fetched = fetched.replace(tzinfo=timezone.utc)

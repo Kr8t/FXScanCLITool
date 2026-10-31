@@ -4,7 +4,7 @@ Uses yfinance to download daily OHLCV data for each FX pair.
 Implements a cache-first strategy: if the SQLite cache is fresh,
 we skip the network call entirely.
 
-IMPORTANT: Daily FX candles close at 5pm ET (22:00 UTC). If the
+IMPORTANT: Daily FX candles close at 5:00 PM New York time. If the
 current time is before that, today's bar is incomplete and must
 be excluded from analysis.
 """
@@ -16,12 +16,12 @@ from datetime import datetime, timezone, time
 import pandas as pd
 import yfinance as yf
 
-from .config import FX_PAIRS, YF_PERIOD, YF_INTERVAL
+from .config import FX_PAIRS, YF_PERIOD, YF_INTERVAL, NY_TZ
 from .cache import load, store
 
 
-# FX market daily candle closes at 5pm ET = 22:00 UTC
-FX_DAILY_CLOSE_UTC: time = time(22, 0)
+# FX market daily candle closes at 5:00 PM New York time
+FX_DAILY_CLOSE_NY: time = time(17, 0)
 
 
 def _normalize_tz(df: pd.DataFrame) -> pd.DataFrame:
@@ -42,15 +42,20 @@ def _normalize_tz(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def _is_today_complete(now: datetime | None = None) -> bool:
-    """Check if today's daily candle has completed.
+    """Check if today's daily candle has completed (after 5:00 PM New York time).
 
-    FX daily candles close at 5pm ET (22:00 UTC).
-    Returns True if current time is past the daily close.
+    Uses New York timezone to automatically handle DST transitions.
     """
     if now is None:
-        now = datetime.now(timezone.utc)
-    current_time = now.time()
-    return current_time >= FX_DAILY_CLOSE_UTC
+        now = datetime.now(NY_TZ)
+    elif now.tzinfo is None:
+        # Assume UTC if no timezone, convert to NY
+        now = now.replace(tzinfo=timezone.utc).astimezone(NY_TZ)
+    else:
+        # Convert to NY time
+        now = now.astimezone(NY_TZ)
+
+    return now.time() >= FX_DAILY_CLOSE_NY
 
 
 def _filter_completed_candles(
@@ -62,7 +67,7 @@ def _filter_completed_candles(
     Parameters
     ----------
     rows : List of OHLCV dicts with 'date' key in YYYY-MM-DD format.
-    now : Current time (UTC). Defaults to actual current time.
+    now : Current time. Defaults to actual current time in NY timezone.
 
     Returns
     -------
@@ -70,8 +75,13 @@ def _filter_completed_candles(
         Filtered list with only completed candles.
     """
     if now is None:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(NY_TZ)
+    elif now.tzinfo is None:
+        now = now.replace(tzinfo=timezone.utc).astimezone(NY_TZ)
+    else:
+        now = now.astimezone(NY_TZ)
 
+    # Get today's date in NY timezone
     today_str = now.strftime("%Y-%m-%d")
 
     # If today's candle is complete, keep everything
@@ -142,7 +152,7 @@ def fetch_all(
     force: bool = False,
     now: datetime | None = None,
 ) -> dict[str, list[dict]]:
-    """Fetch OHLCV for all 18 FX pairs.
+    """Fetch OHLCV for all FX pairs.
 
     Returns a dict mapping symbol → list of OHLCV dicts.
     Only includes completed candles (excludes today's partial bar).

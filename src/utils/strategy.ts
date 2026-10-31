@@ -21,26 +21,31 @@ export interface Signal {
   prevCandle: Candle;
 }
 
+// 7 Majors + 6 Yen Crosses + 3 EUR Crosses = 16 pairs
 export const FX_PAIRS = [
+  // 7 Majors
   'EURUSD=X', 'GBPUSD=X', 'USDJPY=X', 'USDCHF=X',
   'AUDUSD=X', 'USDCAD=X', 'NZDUSD=X',
-  'EURGBP=X', 'EURJPY=X', 'EURCHF=X', 'EURAUD=X',
-  'GBPJPY=X', 'GBPCHF=X',
-  'AUDJPY=X', 'AUDNZD=X',
+  // Yen Crosses (6)
+  'EURJPY=X', 'GBPJPY=X', 'AUDJPY=X',
   'CADJPY=X', 'CHFJPY=X', 'NZDJPY=X',
+  // EUR Crosses (3, excluding EUR/JPY already counted)
+  'EURGBP=X', 'EURCHF=X', 'EURAUD=X',
 ] as const;
 
 export const PAIR_NAMES: Record<string, string> = {
+  // Majors
   'EURUSD=X': 'EUR/USD', 'GBPUSD=X': 'GBP/USD',
   'USDJPY=X': 'USD/JPY', 'USDCHF=X': 'USD/CHF',
   'AUDUSD=X': 'AUD/USD', 'USDCAD=X': 'USD/CAD',
   'NZDUSD=X': 'NZD/USD',
-  'EURGBP=X': 'EUR/GBP', 'EURJPY=X': 'EUR/JPY',
-  'EURCHF=X': 'EUR/CHF', 'EURAUD=X': 'EUR/AUD',
-  'GBPJPY=X': 'GBP/JPY', 'GBPCHF=X': 'GBP/CHF',
-  'AUDJPY=X': 'AUD/JPY', 'AUDNZD=X': 'AUD/NZD',
-  'CADJPY=X': 'CAD/JPY', 'CHFJPY=X': 'CHF/JPY',
-  'NZDJPY=X': 'NZD/JPY',
+  // Yen Crosses
+  'EURJPY=X': 'EUR/JPY', 'GBPJPY=X': 'GBP/JPY',
+  'AUDJPY=X': 'AUD/JPY', 'CADJPY=X': 'CAD/JPY',
+  'CHFJPY=X': 'CHF/JPY', 'NZDJPY=X': 'NZD/JPY',
+  // EUR Crosses
+  'EURGBP=X': 'EUR/GBP', 'EURCHF=X': 'EUR/CHF',
+  'EURAUD=X': 'EUR/AUD',
 };
 
 /** Parse "XXX/YYY" or "XXXYYY=X" into base and quote currency codes. */

@@ -28,7 +28,7 @@ export default function App() {
               </div>
               <div>
                 <h1 className="text-lg font-bold text-white tracking-tight">FX SCAN</h1>
-                <p className="text-xs text-gray-500 -mt-0.5">18 Major FX Pairs • Real-time Confluence Scanner</p>
+                <p className="text-xs text-gray-500 -mt-0.5">7 Majors + Yen/EUR Crosses • New York Time</p>
               </div>
             </div>
             <span className="hidden sm:inline text-xs text-gray-500 font-mono bg-gray-900 px-2 py-1 rounded border border-gray-800">

@@ -192,7 +192,7 @@ export default function Dashboard() {
           <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
           <span className="text-sm text-green-400 font-medium">LIVE DATA</span>
           <span className="text-xs text-gray-500">
-            Source: ECB via frankfurter.app • {data ? Object.keys(data).length : 0} pairs loaded
+            Source: ECB • {data ? Object.keys(data).length : 0}/16 pairs
             {lastUpdated && ` • Updated ${lastUpdated.toLocaleTimeString()}`}
           </span>
         </div>
@@ -228,7 +228,7 @@ export default function Dashboard() {
             <div className="w-3 h-3 rounded-full bg-green-500"></div>
           </div>
           <span className="ml-3 text-sm text-gray-400 font-mono">
-            fx-scan — 18 pairs | Buffer: {pipBuffer} pips | {new Date().toISOString().split('T')[0]}
+            fx-scan — 16 pairs (7M + 6Y + 3E) | NY Time | Buffer: {pipBuffer} pips | {new Date().toISOString().split('T')[0]}
           </span>
         </div>
 

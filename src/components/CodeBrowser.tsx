@@ -4,20 +4,48 @@ const pythonFiles = [
   {
     name: 'config.py',
     path: 'fx_scan/config.py',
-    description: '18 FX pairs, cache TTLs, pip defaults',
-    content: `"""FX SCAN — Configuration module."""
+    description: '16 FX pairs (7 Majors + Yen/EUR crosses), NY timezone',
+    content: `"""FX SCAN — Configuration module.
+
+Defines the FX pairs to scan:
+  - 7 Major FX pairs
+  - Yen cross pairs (all JPY crosses)
+  - EUR cross pairs (all EUR crosses)
+
+Cache freshness uses New York (Eastern) trading hours:
+  - Market open: Sunday 5:00 PM ET
+  - Market close: Friday 5:00 PM ET
+  - Daily candle close: 5:00 PM ET
+"""
+
 from __future__ import annotations
 import os
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
-FX_PAIRS: list[str] = [
+# ── New York Timezone ───────────────────────────────────────────────
+NY_TZ: ZoneInfo = ZoneInfo("America/New_York")
+
+# ── FX Pairs (7 Majors + Yen Crosses + EUR Crosses) ─────────────────
+# 7 Majors
+_MAJORS: list[str] = [
     "EURUSD=X", "GBPUSD=X", "USDJPY=X", "USDCHF=X",
     "AUDUSD=X", "USDCAD=X", "NZDUSD=X",
-    "EURGBP=X", "EURJPY=X", "EURCHF=X", "EURAUD=X",
-    "GBPJPY=X", "GBPCHF=X",
-    "AUDJPY=X", "AUDNZD=X",
+]
+
+# Yen Crosses (6 pairs - all JPY crosses except USD/JPY)
+_YEN_CROSSES: list[str] = [
+    "EURJPY=X", "GBPJPY=X", "AUDJPY=X",
     "CADJPY=X", "CHFJPY=X", "NZDJPY=X",
 ]
+
+# EUR Crosses (3 pairs - EUR crosses not already listed)
+_EUR_CROSSES: list[str] = [
+    "EURGBP=X", "EURCHF=X", "EURAUD=X",
+]
+
+# Combined: 7 + 6 + 3 = 16 pairs
+FX_PAIRS: list[str] = _MAJORS + _YEN_CROSSES + _EUR_CROSSES
 
 PAIR_NAMES: dict[str, str] = {
     "EURUSD=X": "EUR/USD", "GBPUSD=X": "GBP/USD",
@@ -26,8 +54,8 @@ PAIR_NAMES: dict[str, str] = {
     "NZDUSD=X": "NZD/USD",
     "EURGBP=X": "EUR/GBP", "EURJPY=X": "EUR/JPY",
     "EURCHF=X": "EUR/CHF", "EURAUD=X": "EUR/AUD",
-    "GBPJPY=X": "GBP/JPY", "GBPCHF=X": "GBP/CHF",
-    "AUDJPY=X": "AUD/JPY", "AUDNZD=X": "AUD/NZD",
+    "GBPJPY=X": "GBP/JPY",
+    "AUDJPY=X": "AUD/JPY",
     "CADJPY=X": "CAD/JPY", "CHFJPY=X": "CHF/JPY",
     "NZDJPY=X": "NZD/JPY",
 }
@@ -110,10 +138,10 @@ def clear() -> None:
   {
     name: 'data.py',
     path: 'fx_scan/data.py',
-    description: 'yfinance fetcher with incomplete candle filtering',
+    description: 'yfinance fetcher with NY time filtering',
     content: `"""FX SCAN — Data fetching layer.
 
-IMPORTANT: Daily FX candles close at 5pm ET (22:00 UTC). If the
+IMPORTANT: Daily FX candles close at 5:00 PM New York time. If the
 current time is before that, today's bar is incomplete and must
 be excluded from analysis.
 """
@@ -121,10 +149,10 @@ from __future__ import annotations
 from datetime import datetime, timezone, time
 import pandas as pd
 import yfinance as yf
-from .config import FX_PAIRS, YF_PERIOD, YF_INTERVAL
+from .config import FX_PAIRS, YF_PERIOD, YF_INTERVAL, NY_TZ
 from .cache import load, store
 
-FX_DAILY_CLOSE_UTC: time = time(22, 0)  # 5pm ET
+FX_DAILY_CLOSE_NY: time = time(17, 0)  # 5:00 PM New York time
 
 def _normalize_tz(df: pd.DataFrame) -> pd.DataFrame:
     if df.empty: return df
@@ -135,13 +163,21 @@ def _normalize_tz(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 def _is_today_complete(now: datetime | None = None) -> bool:
-    """Check if today's daily candle has completed (after 22:00 UTC)."""
-    if now is None: now = datetime.now(timezone.utc)
-    return now.time() >= FX_DAILY_CLOSE_UTC
+    """Check if today's daily candle has completed (after 5:00 PM New York time)."""
+    if now is None: now = datetime.now(NY_TZ)
+    elif now.tzinfo is None:
+        now = now.replace(tzinfo=timezone.utc).astimezone(NY_TZ)
+    else:
+        now = now.astimezone(NY_TZ)
+    return now.time() >= FX_DAILY_CLOSE_NY
 
 def _filter_completed_candles(rows: list[dict], now: datetime | None = None) -> list[dict]:
     """Remove today's incomplete candle if market hasn't closed yet."""
-    if now is None: now = datetime.now(timezone.utc)
+    if now is None: now = datetime.now(NY_TZ)
+    elif now.tzinfo is None:
+        now = now.replace(tzinfo=timezone.utc).astimezone(NY_TZ)
+    else:
+        now = now.astimezone(NY_TZ)
     today_str = now.strftime("%Y-%m-%d")
     if _is_today_complete(now):
         return rows  # Keep everything

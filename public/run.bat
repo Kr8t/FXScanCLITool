@@ -7,12 +7,15 @@ REM ═════════════════════════�
 title FX SCAN
 
 echo.
-echo  ╔═══════════════════════════════════════════════════╗
-echo  ║       FX SCAN — Major FX Pair Signal Scanner     ║
-echo  ║                                                   ║
-echo  ║  Inside Day: Close INSIDE previous day's range    ║
-echo  ║  CIB: Close OUTSIDE previous day's range          ║
-echo  ╚═══════════════════════════════════════════════════╝
+echo  ╔═══════════════════════════════════════════════════════╗
+echo  ║       FX SCAN — FX Pair Signal Scanner               ║
+echo  ║                                                       ║
+echo  ║  Scanning: 7 Majors + Yen Crosses + EUR Crosses      ║
+echo  ║  Timezone: New York (Eastern) Time                    ║
+echo  ║                                                       ║
+echo  ║  Inside Day: ENTIRE candle INSIDE previous range      ║
+echo  ║  CIB: Close OUTSIDE previous day's range              ║
+echo  ╚═══════════════════════════════════════════════════════╝
 echo.
 
 REM Check Python is available
