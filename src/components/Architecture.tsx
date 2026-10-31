@@ -144,10 +144,10 @@ export default function Architecture() {
       {/* Features Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { icon: '🔍', title: '18 Major FX Pairs', desc: 'All majors + key crosses', color: 'from-blue-500/20 to-blue-600/10', border: 'border-blue-500/30' },
-          { icon: '⚡', title: 'SQLite Cache', desc: '1h market / 24h weekend TTL', color: 'from-green-500/20 to-green-600/10', border: 'border-green-500/30' },
-          { icon: '🧪', title: '45+ Pytest Tests', desc: 'Timezone, weekend, edge cases', color: 'from-cyan-500/20 to-cyan-600/10', border: 'border-cyan-500/30' },
-          { icon: '🏗️', title: 'Clean Architecture', desc: '5 modules, clear boundaries', color: 'from-indigo-500/20 to-indigo-600/10', border: 'border-indigo-500/30' },
+          { icon: '🔍', title: '16 FX Pairs', desc: '7 Majors + 6 Yen + 3 EUR crosses', color: 'from-blue-500/20 to-blue-600/10', border: 'border-blue-500/30' },
+          { icon: '🗽', title: 'New York Time', desc: '5:00 PM ET daily close, DST-aware', color: 'from-green-500/20 to-green-600/10', border: 'border-green-500/30' },
+          { icon: '⚡', title: 'SQLite Cache', desc: '1h market / 24h weekend TTL', color: 'from-cyan-500/20 to-cyan-600/10', border: 'border-cyan-500/30' },
+          { icon: '🧪', title: '45+ Pytest Tests', desc: 'Timezone, weekend, edge cases', color: 'from-indigo-500/20 to-indigo-600/10', border: 'border-indigo-500/30' },
         ].map(f => (
           <div key={f.title} className={`rounded-xl border ${f.border} bg-gradient-to-br ${f.color} p-5`}>
             <div className="text-2xl mb-3">{f.icon}</div>
