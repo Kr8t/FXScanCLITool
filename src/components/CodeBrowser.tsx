@@ -179,11 +179,11 @@ def fetch_all(force: bool = False, now: datetime | None = None) -> dict[str, lis
   {
     name: 'strategy.py',
     path: 'fx_scan/strategy.py',
-    description: 'Pure ID & CIB detection (close-based)',
+    description: 'Pure ID & CIB detection',
     content: `"""FX SCAN — Strategy detection (pure functions).
 
-Inside Day: close is INSIDE previous day's range (consolidation)
-CIB: close is OUTSIDE previous day's range (breakout)
+Inside Day: ENTIRE candle (high, low, close) is INSIDE previous day's range
+CIB: close is OUTSIDE previous day's range (no buffer)
 """
 from __future__ import annotations
 from dataclasses import dataclass
@@ -204,15 +204,18 @@ def _pip_value(symbol: str) -> float:
     return 0.01 if "JPY" in symbol else 0.0001
 
 def detect_inside_day(prev: Candle, curr: Candle) -> bool:
-    """Close is strictly within previous day's range."""
-    return prev.low < curr.close < prev.high
+    """ENTIRE candle (high, low, close) is strictly within previous day's range."""
+    return (
+        prev.low < curr.low and      # current low is above previous low
+        curr.high < prev.high and    # current high is below previous high
+        prev.low < curr.close < prev.high  # close is also inside
+    )
 
 def detect_cib(prev: Candle, curr: Candle, symbol: str,
                pip_buffer: float = DEFAULT_PIP_BUFFER) -> Literal["bullish","bearish"] | None:
-    """Close is outside previous day's range (with pip buffer)."""
-    buf = pip_buffer * _pip_value(symbol)
-    if curr.close > prev.high + buf: return "bullish"
-    if curr.close < prev.low - buf: return "bearish"
+    """Close is outside previous day's range (no buffer - clean breakout)."""
+    if curr.close > prev.high: return "bullish"
+    if curr.close < prev.low: return "bearish"
     return None
 
 def candle_direction(c: Candle) -> Literal["bullish","bearish","neutral"]:
