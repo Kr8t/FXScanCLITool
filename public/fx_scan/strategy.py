@@ -3,15 +3,17 @@
 Two strategies are implemented for confluence with day trading ideas:
 
 1. **Inside Day (ID)**
-   The latest completed candle CLOSES INSIDE the previous day's range.
-   (prev.low < curr.close < prev.high)
-   → Suggests consolidation, price accepting value within prior range.
+   The latest completed candle's ENTIRE RANGE is inside the previous day's range.
+   - prev.low < curr.low (current low is above previous low)
+   - curr.high < prev.high (current high is below previous high)
+   - prev.low < curr.close < prev.high (close is also inside)
+   → Suggests consolidation, price contained within prior range.
 
 2. **Closed In Breakout (CIB)**
    The latest completed candle CLOSES OUTSIDE the previous day's range.
-   - Bullish CIB: close > prev.high + buffer
-   - Bearish CIB: close < prev.low - buffer
-   → Suggests breakout, price rejecting prior range boundaries.
+   - Bullish CIB: curr.close > prev.high (close above previous high)
+   - Bearish CIB: curr.close < prev.low (close below previous low)
+   → Suggests breakout, price breaking beyond prior range boundaries.
 
 Important rules:
 - Current partial bars are excluded (we only look at completed candles).
@@ -64,12 +66,20 @@ def detect_inside_day(
     prev: Candle,
     curr: Candle,
 ) -> bool:
-    """Return True if *curr* closes inside previous day's range.
+    """Return True if *curr* is an inside day relative to *prev*.
 
-    Inside day: prev.low < curr.close < prev.high
-    (the close is strictly within the previous day's range).
+    Inside day: The ENTIRE candle is within previous day's range.
+    - prev.low < curr.low (current low is above previous low)
+    - curr.high < prev.high (current high is below previous high)
+    - prev.low < curr.close < prev.high (close is also inside)
+    
+    The full range (including wicks) must be inside the previous day.
     """
-    return prev.low < curr.close < prev.high
+    return (
+        prev.low < curr.low and
+        curr.high < prev.high and
+        prev.low < curr.close < prev.high
+    )
 
 
 def detect_cib(
@@ -81,18 +91,17 @@ def detect_cib(
     """Detect Closed In Breakout (CIB).
 
     CIB occurs when the close is OUTSIDE the previous day's range:
-    - Bullish CIB: curr.close > prev.high + buffer
-    - Bearish CIB: curr.close < prev.low - buffer
+    - Bullish CIB: curr.close > prev.high
+    - Bearish CIB: curr.close < prev.low
 
-    The pip buffer adds tolerance to avoid false signals from noise.
+    The close must be strictly beyond the previous day's high or low.
+    No buffer is applied - it's a clean breakout close.
 
     Returns the direction or None.
     """
-    buffer_abs = pip_buffer * _pip_value(symbol)
-
-    if curr.close > prev.high + buffer_abs:
+    if curr.close > prev.high:
         return "bullish"
-    if curr.close < prev.low - buffer_abs:
+    if curr.close < prev.low:
         return "bearish"
     return None
 

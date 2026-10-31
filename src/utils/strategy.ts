@@ -55,17 +55,25 @@ function pipValue(symbol: string): number {
 }
 
 /**
- * Inside Day: curr.close is STRICTLY INSIDE prev day's range.
- * prev.low < curr.close < prev.high
+ * Inside Day: The ENTIRE candle (high, low, close) is STRICTLY INSIDE prev day's range.
+ * - prev.low < curr.low (current low is above previous low)
+ * - curr.high < prev.high (current high is below previous high)
+ * - prev.low < curr.close < prev.high (close is also inside)
  */
 export function detectInsideDay(prev: Candle, curr: Candle): boolean {
-  return prev.low < curr.close && curr.close < prev.high;
+  return (
+    prev.low < curr.low &&
+    curr.high < prev.high &&
+    prev.low < curr.close &&
+    curr.close < prev.high
+  );
 }
 
 /**
  * CIB (Closed In Breakout): curr.close is STRICTLY OUTSIDE prev day's range.
- * Bullish: curr.close > prev.high + buffer
- * Bearish: curr.close < prev.low - buffer
+ * Bullish: curr.close > prev.high (close above previous high)
+ * Bearish: curr.close < prev.low (close below previous low)
+ * No buffer - clean breakout close.
  */
 export function detectCib(
   prev: Candle,
@@ -73,9 +81,9 @@ export function detectCib(
   symbol: string,
   pipBuffer: number,
 ): 'bullish' | 'bearish' | null {
-  const bufferAbs = pipBuffer * pipValue(symbol);
-  if (curr.close > prev.high + bufferAbs) return 'bullish';
-  if (curr.close < prev.low - bufferAbs) return 'bearish';
+  // pipBuffer parameter kept for API compatibility but not used
+  if (curr.close > prev.high) return 'bullish';
+  if (curr.close < prev.low) return 'bearish';
   return null;
 }
 

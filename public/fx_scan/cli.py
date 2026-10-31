@@ -137,18 +137,46 @@ def main(argv: list[str] | None = None) -> None:
         sys.exit(1)
 
     console.print(f"  ✓ Loaded data for {len(data)} pairs")
+    
+    # Show what day we're analyzing
+    sample_candles = list(data.values())[0] if data else []
+    if len(sample_candles) >= 2:
+        latest_date = sample_candles[-1]['date']
+        prev_date = sample_candles[-2]['date']
+        console.print(f"\n  [bold]Most recent completed day: {latest_date}[/bold]")
+        console.print(f"  [dim]Comparing {prev_date} (previous) → {latest_date} (current)[/dim]")
 
     # Debug: Show what dates are being analyzed
-    console.print(f"\n  [dim]Latest completed candles (prev → curr):[/dim]")
+    console.print(f"\n  [bold cyan]Signal analysis for each pair:[/bold cyan]")
     for symbol in list(data.keys())[:5]:  # Show first 5 as examples
         candles = data[symbol]
         if len(candles) >= 2:
             prev = candles[-2]
             curr = candles[-1]
             name = PAIR_NAMES.get(symbol, symbol)
+            
+            # Determine signal type
+            is_cib_bull = curr['close'] > prev['high']
+            is_cib_bear = curr['close'] < prev['low']
+            is_inside = (prev['low'] < curr['low'] and 
+                        curr['high'] < prev['high'] and 
+                        prev['low'] < curr['close'] < prev['high'])
+            
+            signal_text = ""
+            if is_cib_bull:
+                signal_text = " [green]→ BULLISH CIB[/green]"
+            elif is_cib_bear:
+                signal_text = " [red]→ BEARISH CIB[/red]"
+            elif is_inside:
+                signal_text = " [purple]→ INSIDE DAY[/purple]"
+            else:
+                signal_text = " [dim]→ NO SIGNAL[/dim]"
+            
             console.print(
-                f"    [dim]{name}: {prev['date']} → {curr['date']} "
-                f"(close: {curr['close']:.5f}, prev range: {prev['low']:.5f}-{prev['high']:.5f})[/dim]"
+                f"    [dim]{name}:[/dim] {prev['date']} → [bold]{curr['date']}[/bold]"
+            )
+            console.print(
+                f"      [dim]Close: {curr['close']:.5f} | Prev Range: {prev['low']:.5f}-{prev['high']:.5f}[/dim]{signal_text}"
             )
 
     # Debug mode: Show all raw data

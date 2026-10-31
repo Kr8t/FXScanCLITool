@@ -89,20 +89,24 @@ export default function Architecture() {
           <div className="space-y-3">
             <h4 className="text-purple-400 font-semibold flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-purple-400"></span>
-              Inside Day (ID) — Close INSIDE prev range
+              Inside Day (ID) — ENTIRE candle INSIDE prev range
             </h4>
             <ul className="text-sm text-gray-400 space-y-2">
               <li className="flex items-start gap-2">
                 <span className="text-purple-400 mt-0.5">•</span>
-                <span>prev.low <strong className="text-white">&lt;</strong> close <strong className="text-white">&lt;</strong> prev.high</span>
+                <span>prev.low <strong className="text-white">&lt;</strong> curr.low (low is above prev low)</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-purple-400 mt-0.5">•</span>
-                <span>The <strong className="text-white">close</strong> must be strictly within previous day's range</span>
+                <span>curr.high <strong className="text-white">&lt;</strong> prev.high (high is below prev high)</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-purple-400 mt-0.5">•</span>
-                <span>Suggests <strong className="text-white">consolidation</strong> — price accepting value within prior range</span>
+                <span>prev.low <strong className="text-white">&lt;</strong> close <strong className="text-white">&lt;</strong> prev.high (close also inside)</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-purple-400 mt-0.5">•</span>
+                <span>Suggests <strong className="text-white">consolidation</strong> — entire range contained within prior day</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-purple-400 mt-0.5">•</span>
@@ -118,19 +122,19 @@ export default function Architecture() {
             <ul className="text-sm text-gray-400 space-y-2">
               <li className="flex items-start gap-2">
                 <span className="text-orange-400 mt-0.5">•</span>
-                <span>Bullish: close <strong className="text-white">&gt;</strong> prev.high + buffer</span>
+                <span>Bullish: close <strong className="text-white">&gt;</strong> prev.high (clean breakout above)</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-orange-400 mt-0.5">•</span>
-                <span>Bearish: close <strong className="text-white">&lt;</strong> prev.low − buffer</span>
+                <span>Bearish: close <strong className="text-white">&lt;</strong> prev.low (clean breakout below)</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-orange-400 mt-0.5">•</span>
-                <span>Suggests <strong className="text-white">breakout</strong> — price rejecting prior range boundaries</span>
+                <span>Suggests <strong className="text-white">breakout</strong> — price closing beyond prior range</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-orange-400 mt-0.5">•</span>
-                <span>Buffer in pips (default: 2.0, JPY-aware) to filter noise</span>
+                <span><strong className="text-white">No buffer</strong> — must be a clean close beyond the level</span>
               </li>
             </ul>
           </div>
