@@ -129,8 +129,32 @@ export default function DownloadGuide() {
         </h4>
         <p className="text-sm text-gray-400">
           After setting up the files, double-click <code className="text-yellow-300 bg-gray-900 px-1 rounded">run.bat</code> to launch.
-          It auto-installs dependencies if needed.
+          It auto-clears the cache and fetches fresh data every time.
         </p>
+      </div>
+
+      {/* Troubleshooting */}
+      <div className="bg-red-500/5 border border-red-500/20 rounded-xl p-5">
+        <h4 className="text-red-400 font-semibold mb-2 flex items-center gap-2">
+          <span>🔧</span> Troubleshooting: Seeing Wrong Signals?
+        </h4>
+        <div className="text-sm text-gray-400 space-y-2">
+          <p>If you see incorrect signals (like EURUSD showing as CIB when it shouldn't), clear the cache:</p>
+          <div className="bg-gray-950 rounded-lg p-3 font-mono text-xs space-y-1">
+            <div className="flex items-center justify-between">
+              <code className="text-yellow-400">python -m fx_scan.cli --clear-cache</code>
+              <CopyButton text="python -m fx_scan.cli --clear-cache" />
+            </div>
+            <div className="text-gray-600 mt-2"># Then run with --force to bypass cache:</div>
+            <div className="flex items-center justify-between">
+              <code className="text-green-400">python -m fx_scan.cli --force</code>
+              <CopyButton text="python -m fx_scan.cli --force" />
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 mt-2">
+            The cache is stored at <code className="text-cyan-400">~/.fx_scan/cache.sqlite3</code>. You can also delete this file manually.
+          </p>
+        </div>
       </div>
 
       {/* Python vs Web */}

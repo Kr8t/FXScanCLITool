@@ -246,17 +246,18 @@ def _arrow(d: str) -> str:
 def _build_table(title: str, signals: list[Signal]) -> Table:
     t = Table(title=title, show_header=True, header_style="bold cyan",
               border_style="dim", title_style="bold magenta")
-    for col in ["Pair","O","H","L","C","Dir","Prev H","Prev L","Buffer"]:
-        t.add_column(col, justify="right" if col not in ("Pair","Dir") else "center")
+    for col in ["Pair","Date","Close","Dir","Prev Date","Prev H","Prev L","Buffer"]:
+        t.add_column(col, justify="right" if col not in ("Pair","Dir","Date","Prev Date") else "center")
     if not signals:
-        t.add_row(Text("No signals detected", style="dim italic"), *[""]*8)
+        t.add_row(Text("No signals detected", style="dim italic"), *[""]*7)
         return t
     for s in signals:
         st = _style(s.direction); c = s.candle; p = s.prev_candle
         t.add_row(Text(PAIR_NAMES.get(s.symbol,s.symbol), style=st),
-                  Text(f"{c.open:.5f}",style=st), Text(f"{c.high:.5f}",style=st),
-                  Text(f"{c.low:.5f}",style=st), Text(f"{c.close:.5f}",style=st),
+                  Text(c.date, style=st),
+                  Text(f"{c.close:.5f}",style=st),
                   Text(_arrow(s.direction),style=st),
+                  Text(p.date, style="dim"),
                   Text(f"{p.high:.5f}",style="dim"), Text(f"{p.low:.5f}",style="dim"),
                   Text(f"{s.pip_buffer:.1f}",style="yellow"))
     return t
@@ -275,6 +276,15 @@ def main(argv: list[str] | None = None) -> None:
     if not data:
         console.print("[red]No data retrieved.[/red]"); sys.exit(1)
     console.print(f"  ✓ Loaded {len(data)} pairs")
+    
+    # Debug: Show what dates are being analyzed
+    console.print(f"\\n  [dim]Analyzing latest completed candles:[/dim]")
+    for symbol in list(data.keys())[:3]:
+        candles = data[symbol]
+        if len(candles) >= 2:
+            prev, curr = candles[-2], candles[-1]
+            console.print(f"    [dim]{PAIR_NAMES.get(symbol,symbol)}: {prev['date']} → {curr['date']}[/dim]")
+    
     signals = analyze_all(data, pip_buffer=args.pip_buffer)
     ids = [s for s in signals if s.signal_type=="inside_day"]
     cibs = [s for s in signals if s.signal_type=="cib"]
