@@ -304,18 +304,33 @@ def main(argv: list[str] | None = None) -> None:
         console.print("[red]No data retrieved.[/red]"); sys.exit(1)
     console.print(f"  ✓ Loaded {len(data)} pairs")
     
-    # Debug: Show what dates are being analyzed
-    console.print(f"\\n  [dim]Analyzing latest completed candles:[/dim]")
-    for symbol in list(data.keys())[:3]:
+    # Show what day we're analyzing
+    sample = list(data.values())[0] if data else []
+    if len(sample) >= 2:
+        latest = sample[-1]['date']
+        prev = sample[-2]['date']
+        console.print(f"\\n  [bold]Most recent completed day: {latest}[/bold]")
+        console.print(f"  [dim]Comparing {prev} (previous) → {latest} (current)[/dim]")
+    
+    # Debug: Show signal analysis for each pair
+    console.print(f"\\n  [bold cyan]Signal analysis for each pair:[/bold cyan]")
+    for symbol in list(data.keys())[:5]:
         candles = data[symbol]
         if len(candles) >= 2:
             prev, curr = candles[-2], candles[-1]
-            console.print(f"    [dim]{PAIR_NAMES.get(symbol,symbol)}: {prev['date']} → {curr['date']}[/dim]")
+            name = PAIR_NAMES.get(symbol, symbol)
+            is_cib_bull = curr['close'] > prev['high']
+            is_cib_bear = curr['close'] < prev['low']
+            is_inside = (prev['low'] < curr['low'] and curr['high'] < prev['high'] and 
+                        prev['low'] < curr['close'] < prev['high'])
+            signal = " [green]→ BULLISH CIB[/green]" if is_cib_bull else " [red]→ BEARISH CIB[/red]" if is_cib_bear else " [purple]→ INSIDE DAY[/purple]" if is_inside else " [dim]→ NO SIGNAL[/dim]"
+            console.print(f"    [dim]{name}:[/dim] {prev['date']} → [bold]{curr['date']}[/bold]")
+            console.print(f"      [dim]Close: {curr['close']:.5f} | Prev Range: {prev['low']:.5f}-{prev['high']:.5f}[/dim]{signal}")
     
     signals = analyze_all(data, pip_buffer=args.pip_buffer)
     ids = [s for s in signals if s.signal_type=="inside_day"]
     cibs = [s for s in signals if s.signal_type=="cib"]
-    console.print(); console.print(_build_table("📊 INSIDE DAY (close inside prev range)", ids))
+    console.print(); console.print(_build_table("📊 INSIDE DAY (entire candle inside prev range)", ids))
     console.print(); console.print(_build_table("🚀 CLOSED IN BREAKOUT (close outside prev range)", cibs))
     console.print(f"\\n  [dim]Signals: {len(signals)} (ID:{len(ids)}, CIB:{len(cibs)})[/dim]")
 
